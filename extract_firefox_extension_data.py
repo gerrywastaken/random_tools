@@ -77,7 +77,7 @@ def decode_data(data_blob):
     except:
         return None
 
-def extract_data(db_path):
+def extract_data(db_path, verbose=False):
     """Extract all data from the database."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -88,44 +88,72 @@ def extract_data(db_path):
     result = {}
     print(f"Found {len(rows)} entries in database\n")
 
-    for key_blob, data_blob in rows:
+    for i, (key_blob, data_blob) in enumerate(rows, 1):
         key = decode_key(key_blob)
         data = decode_data(data_blob)
 
+        if verbose:
+            print(f"Entry {i}:")
+            if isinstance(key_blob, bytes):
+                print(f"  Key (hex): {key_blob[:40].hex()}")
+            else:
+                print(f"  Key (raw): {key_blob}")
+            print(f"  Key (decoded): {key}")
+
+            if isinstance(data_blob, bytes):
+                print(f"  Data (hex): {data_blob[:60].hex()}")
+                decoded_preview = data_blob.decode('utf-8', errors='ignore')[:100]
+                print(f"  Data (preview): {repr(decoded_preview)}")
+            else:
+                print(f"  Data (raw): {data_blob}")
+            print(f"  JSON extracted: {data is not None}")
+            print()
+
         if key and data is not None:
             result[key] = data
-            print(f"✓ Extracted: {key}")
+            if not verbose:
+                print(f"✓ Extracted: {key}")
         elif key:
-            print(f"✗ Could not decode data for: {key}")
+            if not verbose:
+                print(f"✗ Could not decode data for: {key}")
         else:
-            print(f"✗ Could not decode key")
+            if not verbose:
+                print(f"✗ Could not decode key")
 
     return result
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: ./extract_firefox_extension_data.py <database.sqlite> [output.json]")
+        print("Usage: ./extract_firefox_extension_data.py <database.sqlite> [output.json] [-v|--verbose]")
         print("Example: ./extract_firefox_extension_data.py path/to/extension.sqlite recovered.json")
+        print("         ./extract_firefox_extension_data.py path/to/extension.sqlite --verbose")
         sys.exit(1)
 
-    db_path = sys.argv[1]
-    output_path = sys.argv[2] if len(sys.argv) > 2 else None
+    # Parse arguments
+    verbose = '--verbose' in sys.argv or '-v' in sys.argv
+    args = [arg for arg in sys.argv[1:] if arg not in ['--verbose', '-v']]
+
+    db_path = args[0]
+    output_path = args[1] if len(args) > 1 else None
 
     print(f"Extracting data from: {db_path}\n")
 
     try:
-        data = extract_data(db_path)
+        data = extract_data(db_path, verbose=verbose)
 
         if output_path:
             with open(output_path, 'w') as f:
                 json.dump(data, f, indent=2)
             print(f"\n✓✓✓ Saved to: {output_path}")
         else:
-            print(f"\nRecovered data:")
-            print(json.dumps(data, indent=2))
+            if not verbose:
+                print(f"\nRecovered data:")
+                print(json.dumps(data, indent=2))
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == '__main__':
