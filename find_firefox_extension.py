@@ -46,20 +46,20 @@ def search_database(db_path, search_term):
         print(f"Error reading {db_path}: {e}", file=sys.stderr)
         return False
 
-def find_default_firefox_storage():
-    """Find the default Firefox profile storage directory."""
+def find_all_firefox_profiles():
+    """Find all Firefox profile storage directories."""
     firefox_dir = os.path.expanduser("~/.mozilla/firefox")
     if not os.path.exists(firefox_dir):
-        return None
+        return []
 
-    # Look for profile directories
+    profiles = []
     for entry in os.listdir(firefox_dir):
         profile_dir = os.path.join(firefox_dir, entry)
         storage_dir = os.path.join(profile_dir, "storage", "default")
         if os.path.isdir(storage_dir):
-            return storage_dir
+            profiles.append(storage_dir)
 
-    return None
+    return profiles
 
 def main():
     if len(sys.argv) < 2:
@@ -72,10 +72,22 @@ def main():
     if len(sys.argv) > 2:
         search_path = sys.argv[2]
     else:
-        search_path = find_default_firefox_storage()
-        if not search_path:
-            print("Error: Could not find Firefox profile. Please specify storage path.", file=sys.stderr)
+        # Find all available profiles
+        profiles = find_all_firefox_profiles()
+        if not profiles:
+            print("Error: Could not find any Firefox profiles.", file=sys.stderr)
+            print("Please specify storage path manually:", file=sys.stderr)
             print("Example: ./find_firefox_extension.py 'example.com' ~/.mozilla/firefox/xyz.default/storage/default", file=sys.stderr)
+            sys.exit(1)
+        elif len(profiles) == 1:
+            search_path = profiles[0]
+        else:
+            print(f"Found {len(profiles)} Firefox profiles:", file=sys.stderr)
+            for i, profile in enumerate(profiles, 1):
+                print(f"  {i}. {profile}", file=sys.stderr)
+            print("", file=sys.stderr)
+            print("Please specify which profile to search:", file=sys.stderr)
+            print(f"Example: ./find_firefox_extension.py '{search_term}' {profiles[0]}", file=sys.stderr)
             sys.exit(1)
 
     print(f"Searching for '{search_term}' in {search_path}")
