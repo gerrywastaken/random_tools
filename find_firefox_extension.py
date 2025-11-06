@@ -25,9 +25,19 @@ def search_database(db_path, search_term):
         conn.close()
 
         for key_blob, data_blob in rows:
-            # Decode and search in both key and data
-            key_str = key_blob.decode('utf-8', errors='ignore')
-            data_str = data_blob.decode('utf-8', errors='ignore')
+            # Handle different data types (BLOB, int, etc.)
+            key_str = ''
+            data_str = ''
+
+            if isinstance(key_blob, bytes):
+                key_str = key_blob.decode('utf-8', errors='ignore')
+            elif key_blob is not None:
+                key_str = str(key_blob)
+
+            if isinstance(data_blob, bytes):
+                data_str = data_blob.decode('utf-8', errors='ignore')
+            elif data_blob is not None:
+                data_str = str(data_blob)
 
             if search_term.lower() in key_str.lower() or search_term.lower() in data_str.lower():
                 return True
@@ -36,23 +46,37 @@ def search_database(db_path, search_term):
         print(f"Error reading {db_path}: {e}", file=sys.stderr)
         return False
 
+def find_default_firefox_storage():
+    """Find the default Firefox profile storage directory."""
+    firefox_dir = os.path.expanduser("~/.mozilla/firefox")
+    if not os.path.exists(firefox_dir):
+        return None
+
+    # Look for profile directories
+    for entry in os.listdir(firefox_dir):
+        profile_dir = os.path.join(firefox_dir, entry)
+        storage_dir = os.path.join(profile_dir, "storage", "default")
+        if os.path.isdir(storage_dir):
+            return storage_dir
+
+    return None
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: ./find_firefox_extension.py <search_term> [storage_path]")
-        print("Example: ./find_firefox_extension.py 'example.com' ~/.mozilla/firefox/*.default/storage/default")
+        print("Example: ./find_firefox_extension.py 'example.com' ~/.mozilla/firefox/xyz.default/storage/default")
         sys.exit(1)
 
     search_term = sys.argv[1]
-    search_path = sys.argv[2] if len(sys.argv) > 2 else os.path.expanduser("~/.mozilla/firefox/*.default/storage/default")
 
-    # Handle glob in path
-    import glob as glob_module
-    paths = glob_module.glob(search_path)
-    if not paths:
-        print(f"No paths found matching: {search_path}", file=sys.stderr)
-        sys.exit(1)
-
-    search_path = paths[0]
+    if len(sys.argv) > 2:
+        search_path = sys.argv[2]
+    else:
+        search_path = find_default_firefox_storage()
+        if not search_path:
+            print("Error: Could not find Firefox profile. Please specify storage path.", file=sys.stderr)
+            print("Example: ./find_firefox_extension.py 'example.com' ~/.mozilla/firefox/xyz.default/storage/default", file=sys.stderr)
+            sys.exit(1)
 
     print(f"Searching for '{search_term}' in {search_path}")
     print()
