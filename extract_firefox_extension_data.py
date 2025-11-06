@@ -16,6 +16,10 @@ def decode_key(key_blob):
     if not key_blob:
         return None
 
+    # Handle non-BLOB types (int, etc.)
+    if not isinstance(key_blob, bytes):
+        return str(key_blob)
+
     # Try direct decode
     try:
         decoded = key_blob.decode('utf-8', errors='ignore').strip('\x00')
@@ -39,6 +43,16 @@ def decode_key(key_blob):
 def decode_data(data_blob):
     """Decode data BLOB and extract JSON."""
     if not data_blob:
+        return None
+
+    # Handle non-BLOB types (int, etc.)
+    if not isinstance(data_blob, bytes):
+        # Try to parse as JSON if it's a string
+        if isinstance(data_blob, str):
+            try:
+                return json.loads(data_blob)
+            except:
+                pass
         return None
 
     try:
