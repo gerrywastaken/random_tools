@@ -25,3 +25,9 @@ Scripts for recovering data from Firefox extension storage when extensions get r
 ./parse_indexeddb_structured.py path/to/extension.sqlite
 ./parse_indexeddb_structured.py path/to/extension.sqlite recovered.json
 ```
+
+**extract_make_it_pop_data.py** - Extract make-it-pop extension data (groups and domains)
+```bash
+./extract_make_it_pop_data.py path/to/extension.sqlite
+./extract_make_it_pop_data.py path/to/extension.sqlite recovered.json
+```
