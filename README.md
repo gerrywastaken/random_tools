@@ -1,40 +1,40 @@
 # random_tools
 
-Small scripts and utilities.
+A collection of small, focused utilities and scripts for solving specific problems. Each tool does one thing well, whether that's data recovery, format conversion, automation, or anything else that proves useful.
 
-## Firefox Extension Data Recovery
+This repo is intentionally eclectic—tools here may have nothing in common except that they were needed at some point. Add new tools as you need them; no overarching theme required.
 
-Scripts for recovering data from Firefox extension storage when extensions get reloaded with new UUIDs.
+## Available Tools
 
-**scan_firefox_databases.py** - Scan multiple SQLite files to find IndexedDB databases
+### Firefox Extension Data Recovery
+
+Tools for recovering data from Firefox extension storage (useful when extensions get reloaded with new UUIDs):
+
+- `scan_firefox_databases.py` - Scan multiple SQLite files to find IndexedDB databases
+- `find_firefox_extension.py` - Search for keywords across extension databases
+- `extract_firefox_extension_data.py` - Extract JSON data from databases (handles BLOB encoding)
+- `parse_indexeddb_structured.py` - Parse IndexedDB's structured clone format
+- `extract_make_it_pop_data.py` - Extract make-it-pop extension-specific data
+
+<details>
+<summary>Usage examples</summary>
+
 ```bash
+# Scan for IndexedDB databases
 ./scan_firefox_databases.py ~/.mozilla/firefox/*/storage/default/**/*.sqlite
-./scan_firefox_databases.py '/path/to/firefox/storage/default/*/*.sqlite'
-./scan_firefox_databases.py path/to/*.sqlite --show-all  # show non-IndexedDB files too
-```
 
-**find_firefox_extension.py** - Find which extension database contains a keyword
-```bash
+# Find which database contains specific data
 ./find_firefox_extension.py "showjuice.com"
-./find_firefox_extension.py "example.com" ~/.mozilla/firefox/xyz.default/storage/default
-```
 
-**extract_firefox_extension_data.py** - Extract JSON data from a database (handles BLOB encoding)
-```bash
-./extract_firefox_extension_data.py path/to/extension.sqlite
+# Extract data from a database
 ./extract_firefox_extension_data.py path/to/extension.sqlite output.json
-./extract_firefox_extension_data.py path/to/extension.sqlite --verbose  # debug mode
-./extract_firefox_extension_data.py path/to/extension.sqlite --extract-text  # for binary data
-```
 
-**parse_indexeddb_structured.py** - Parse IndexedDB's structured clone format (for JavaScript objects)
-```bash
-./parse_indexeddb_structured.py path/to/extension.sqlite
+# Parse structured clone format
 ./parse_indexeddb_structured.py path/to/extension.sqlite recovered.json
 ```
 
-**extract_make_it_pop_data.py** - Extract make-it-pop extension data (groups and domains)
-```bash
-./extract_make_it_pop_data.py path/to/extension.sqlite
-./extract_make_it_pop_data.py path/to/extension.sqlite recovered.json
-```
+</details>
+
+---
+
+More tools will be added as needed. Check individual scripts for detailed usage information.
