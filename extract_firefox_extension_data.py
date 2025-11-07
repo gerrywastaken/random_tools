@@ -77,7 +77,21 @@ def decode_data(data_blob):
     except:
         return None
 
-def extract_data(db_path, verbose=False):
+def extract_readable_text(data_blob):
+    """Extract all readable text strings from binary data."""
+    if not isinstance(data_blob, bytes):
+        return []
+
+    # Decode and extract strings of printable characters
+    decoded = data_blob.decode('utf-8', errors='ignore')
+
+    # Extract sequences of printable characters (minimum 3 chars)
+    import re
+    strings = re.findall(r'[\x20-\x7e]{3,}', decoded)
+
+    return [s.strip() for s in strings if s.strip()]
+
+def extract_data(db_path, verbose=False, extract_text=False):
     """Extract all data from the database."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -90,6 +104,18 @@ def extract_data(db_path, verbose=False):
 
     for i, (key_blob, data_blob) in enumerate(rows, 1):
         key = decode_key(key_blob)
+
+        if extract_text:
+            # Extract readable text from binary data
+            text_strings = extract_readable_text(data_blob)
+            if text_strings:
+                print(f"Entry {i} (key: {key or 'unknown'}):")
+                for text in text_strings:
+                    print(f"  {text}")
+                print()
+                result[key or f"entry_{i}"] = {"text_extracted": text_strings}
+            continue
+
         data = decode_data(data_blob)
 
         if verbose:
@@ -124,31 +150,44 @@ def extract_data(db_path, verbose=False):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: ./extract_firefox_extension_data.py <database.sqlite> [output.json] [-v|--verbose]")
-        print("Example: ./extract_firefox_extension_data.py path/to/extension.sqlite recovered.json")
-        print("         ./extract_firefox_extension_data.py path/to/extension.sqlite --verbose")
+        print("Usage: ./extract_firefox_extension_data.py <database.sqlite> [output.json] [options]")
+        print()
+        print("Options:")
+        print("  -v, --verbose        Show detailed hex/binary data for debugging")
+        print("  --extract-text       Extract readable text from binary data (for non-JSON storage)")
+        print()
+        print("Examples:")
+        print("  ./extract_firefox_extension_data.py path/to/extension.sqlite recovered.json")
+        print("  ./extract_firefox_extension_data.py path/to/extension.sqlite --verbose")
+        print("  ./extract_firefox_extension_data.py path/to/extension.sqlite --extract-text")
         sys.exit(1)
 
     # Parse arguments
     verbose = '--verbose' in sys.argv or '-v' in sys.argv
-    args = [arg for arg in sys.argv[1:] if arg not in ['--verbose', '-v']]
+    extract_text = '--extract-text' in sys.argv
+    args = [arg for arg in sys.argv[1:] if arg not in ['--verbose', '-v', '--extract-text']]
 
     db_path = args[0]
     output_path = args[1] if len(args) > 1 else None
 
-    print(f"Extracting data from: {db_path}\n")
+    if extract_text:
+        print(f"Extracting readable text from: {db_path}\n")
+    else:
+        print(f"Extracting data from: {db_path}\n")
 
     try:
-        data = extract_data(db_path, verbose=verbose)
+        data = extract_data(db_path, verbose=verbose, extract_text=extract_text)
 
         if output_path:
             with open(output_path, 'w') as f:
                 json.dump(data, f, indent=2)
             print(f"\n✓✓✓ Saved to: {output_path}")
         else:
-            if not verbose:
+            if not verbose and not extract_text:
                 print(f"\nRecovered data:")
                 print(json.dumps(data, indent=2))
+            elif extract_text and data:
+                print(f"\n✓✓✓ Extracted text from {len(data)} entries")
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)

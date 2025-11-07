@@ -4,7 +4,7 @@ Small scripts and utilities.
 
 ## Firefox Extension Data Recovery
 
-Two simple scripts for recovering data from Firefox extension storage when extensions get reloaded with new UUIDs.
+Scripts for recovering data from Firefox extension storage when extensions get reloaded with new UUIDs.
 
 **find_firefox_extension.py** - Find which extension database contains a keyword
 ```bash
@@ -16,4 +16,12 @@ Two simple scripts for recovering data from Firefox extension storage when exten
 ```bash
 ./extract_firefox_extension_data.py path/to/extension.sqlite
 ./extract_firefox_extension_data.py path/to/extension.sqlite output.json
+./extract_firefox_extension_data.py path/to/extension.sqlite --verbose  # debug mode
+./extract_firefox_extension_data.py path/to/extension.sqlite --extract-text  # for binary data
+```
+
+**parse_indexeddb_structured.py** - Parse IndexedDB's structured clone format (for JavaScript objects)
+```bash
+./parse_indexeddb_structured.py path/to/extension.sqlite
+./parse_indexeddb_structured.py path/to/extension.sqlite recovered.json
 ```
