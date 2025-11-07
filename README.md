@@ -6,6 +6,13 @@ Small scripts and utilities.
 
 Scripts for recovering data from Firefox extension storage when extensions get reloaded with new UUIDs.
 
+**scan_firefox_databases.py** - Scan multiple SQLite files to find IndexedDB databases
+```bash
+./scan_firefox_databases.py ~/.mozilla/firefox/*/storage/default/**/*.sqlite
+./scan_firefox_databases.py '/path/to/firefox/storage/default/*/*.sqlite'
+./scan_firefox_databases.py path/to/*.sqlite --show-all  # show non-IndexedDB files too
+```
+
 **find_firefox_extension.py** - Find which extension database contains a keyword
 ```bash
 ./find_firefox_extension.py "showjuice.com"

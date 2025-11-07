@@ -95,6 +95,13 @@ def extract_data(db_path, verbose=False, extract_text=False):
     """Extract all data from the database."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
+
+    # Check if this is an IndexedDB database (has object_data table)
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='object_data'")
+    if not cursor.fetchone():
+        conn.close()
+        return None  # Not an IndexedDB database
+
     cursor.execute("SELECT key, data FROM object_data")
     rows = cursor.fetchall()
     conn.close()
@@ -177,6 +184,10 @@ def main():
 
     try:
         data = extract_data(db_path, verbose=verbose, extract_text=extract_text)
+
+        if data is None:
+            print(f"⊘ Skipping: Not an IndexedDB database (no object_data table)")
+            sys.exit(0)
 
         if output_path:
             with open(output_path, 'w') as f:
